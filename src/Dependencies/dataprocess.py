@@ -21,19 +21,24 @@ def output_col(process):
              'DESCRIPTIF','PRIX AU KG','PVC MAXI','BONUS', 'BONUS EN %', 'RI EN €','RI EN %','PVC NET','LOT VIRTUEL','PRIX AU KG DU LOT VIRTUEL',
              'MARKET_DESCRIPTIF', 'MARKET_PRIX AU KG', 'MARKET_PVC_MAXI', 'MARKET_BONUS','MARKET_BONUS EN %', 'MARKET_RI EN €', 'MARKET_RI EN %', 'MARKET_PVC NET', 'MARKET_LOT VIRTUEL', 'MARKET_PRIX AU KG DU LOT VIRTUEL',
              'FORMAT GV','FORMAT MV','FORMAT MVK','FORMAT PV','PRODUIT DE UNE','PRODUIT EN DER',
-             'MISE EN AVANT','VIDE_2','PICTO','SR','SR_SEGU_MARKET','CATALOG','CATALOG_MARKET','AFFICHE','SELECTION FRANCAP','SELECTION CODIFRANCE', 'SELECTION SEGUREL','INFO COMPLEMENTAIRES','PHOTO1','PHOTO2','PHOTO3','PHOTO4','PHOTO5','PHOTO6','PHOTO7','PHOTO8','DESCRIPTIF_2','PRIX AU KG_2',
+             'MISE EN AVANT','VIDE_2','PICTO','SR','SR_SEGU_MARKET','CATALOG','CATALOG_MARKET','AFFICHE','SELECTION FRANCAP','SELECTION CODIFRANCE', 'SELECTION SEGUREL','INFO COMPLEMENTAIRES', 'MARKET_INFO COMPLEMENTAIRES','PHOTO1','PHOTO2','PHOTO3','PHOTO4','PHOTO5','PHOTO6','PHOTO7','PHOTO8','DESCRIPTIF_2','PRIX AU KG_2',
              'PRIX AU KG DU LOT VIRTUEL_2','DESCRIPTIF_3','PRIX AU KG_3','PRIX AU KG DU LOT VIRTUEL_3','DESCRIPTIF_4','PRIX AU KG_4','PRIX AU KG DU LOT VIRTUEL_4','DESCRIPTIF_5',
              'PRIX AU KG_5','PRIX AU KG DU LOT VIRTUEL_5','DESCRIPTIF_6','PRIX AU KG_6','PRIX AU KG DU LOT VIRTUEL_6',
              'MARKET_DESCRIPTIF_2','MARKET_PRIX AU KG_2', 'MARKET_PRIX AU KG DU LOT VIRTUEL_2',
              'MARKET_DESCRIPTIF_3','MARKET_PRIX AU KG_3', 'MARKET_PRIX AU KG DU LOT VIRTUEL_3',
              'MARKET_DESCRIPTIF_4','MARKET_PRIX AU KG_4', 'MARKET_PRIX AU KG DU LOT VIRTUEL_4',
+             'MARKET_DESCRIPTIF_5','MARKET_PRIX AU KG_5', 'MARKET_PRIX AU KG DU LOT VIRTUEL_5',
+             'MARKET_DESCRIPTIF_6','MARKET_PRIX AU KG_6', 'MARKET_PRIX AU KG DU LOT VIRTUEL_6',
              'SUPER_Page', 'SUPER_Rang','SUPER_Case','EXPRESS_Page','EXPRESS_Rang','EXPRESS_Case','MARKET_Page','MARKET_Rang','MARKET_Case','REGIO_Page','REGIO_Rang','REGIO_Case','SUPER_WP','EXPRESS_WP','MARKET_WP'
             ] 
     if process == 'CODI':
         remove_list = ['SELECTION SEGUREL', 'MARKET_DESCRIPTIF', 'MARKET_PRIX AU KG', 'MARKET_PVC_MAXI', 'MARKET_BONUS','MARKET_BONUS EN %', 'MARKET_RI EN €', 'MARKET_RI EN %', 'MARKET_PVC NET', 'MARKET_LOT VIRTUEL', 'MARKET_PRIX AU KG DU LOT VIRTUEL',
                     'SR_SEGU_MARKET','MARKET_DESCRIPTIF_2','MARKET_PRIX AU KG_2', 'MARKET_PRIX AU KG DU LOT VIRTUEL_2',
              'MARKET_DESCRIPTIF_3','MARKET_PRIX AU KG_3', 'MARKET_PRIX AU KG DU LOT VIRTUEL_3',
-             'MARKET_DESCRIPTIF_4','MARKET_PRIX AU KG_4', 'MARKET_PRIX AU KG DU LOT VIRTUEL_4']
+             'MARKET_DESCRIPTIF_4','MARKET_PRIX AU KG_4', 'MARKET_PRIX AU KG DU LOT VIRTUEL_4',
+             'MARKET_DESCRIPTIF_5','MARKET_PRIX AU KG_5', 'MARKET_PRIX AU KG DU LOT VIRTUEL_5',
+             'MARKET_DESCRIPTIF_6','MARKET_PRIX AU KG_6', 'MARKET_PRIX AU KG DU LOT VIRTUEL_6',
+             'MARKET_INFO COMPLEMENTAIRES']
         for rem in remove_list:
             liste.remove(rem)
     elif process == 'SEGU':
@@ -48,7 +53,10 @@ def output_col(process):
             'MARKET_PRIX AU KG DU LOT VIRTUEL', 'ISFROM_LOGO', 'CLE', 'MECAPROMO','FORMAT PV', 'VIDE_2', 'PHOTO1','CATALOG_MARKET',
             'MARKET_DESCRIPTIF_2','MARKET_PRIX AU KG_2', 'MARKET_PRIX AU KG DU LOT VIRTUEL_2',
             'MARKET_DESCRIPTIF_3','MARKET_PRIX AU KG_3', 'MARKET_PRIX AU KG DU LOT VIRTUEL_3',
-            'MARKET_DESCRIPTIF_4','MARKET_PRIX AU KG_4', 'MARKET_PRIX AU KG DU LOT VIRTUEL_4',]
+            'MARKET_DESCRIPTIF_4','MARKET_PRIX AU KG_4', 'MARKET_PRIX AU KG DU LOT VIRTUEL_4',
+            'MARKET_DESCRIPTIF_5','MARKET_PRIX AU KG_5', 'MARKET_PRIX AU KG DU LOT VIRTUEL_5',
+            'MARKET_DESCRIPTIF_6','MARKET_PRIX AU KG_6', 'MARKET_PRIX AU KG DU LOT VIRTUEL_6',
+            'MARKET_INFO COMPLEMENTAIRES']
         for rem in remove_list:
             liste.remove(rem)
     return liste
@@ -134,6 +142,7 @@ def col_config(st):
         'DESCRIPTIF_6' : (st.column_config.TextColumn(None, help="", width= None, required=True), True, True),
         'PRIX AU KG_6' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'PRIX AU KG DU LOT VIRTUEL_6' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_INFO COMPLEMENTAIRES': (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'MARKET_DESCRIPTIF' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'MARKET_PRIX AU KG' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'MARKET_PVC_MAXI' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
@@ -153,6 +162,12 @@ def col_config(st):
         'MARKET_DESCRIPTIF_4' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'MARKET_PRIX AU KG_4' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'MARKET_PRIX AU KG DU LOT VIRTUEL_4' :(st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_DESCRIPTIF_5' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_PRIX AU KG_5' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_PRIX AU KG DU LOT VIRTUEL_5' :(st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_DESCRIPTIF_6' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_PRIX AU KG_6' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
+        'MARKET_PRIX AU KG DU LOT VIRTUEL_6' :(st.column_config.Column(None, help="", width= None, required=True), True, True),
         'SUPER_Page' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'SUPER_Rang' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
         'SUPER_Case' : (st.column_config.Column(None, help="", width= None, required=True), True, True),
@@ -191,15 +206,15 @@ def clean(df, rename_dict,col2remove, col2add):
     return df
 
 def correct_descriptif(x):
-    x = re.sub(r"(\d)cm",r"\1 cm", x)
-    x = re.sub(r"(\d)g",r"\1 g", x)
-    x = re.sub(r"(\d)mg",r"\1 mg", x)
-    x = re.sub(r"(\d)ml",r"\1 ml", x)
-    x = re.sub(r"(\d)cl",r"\1 cl", x)
-    x = re.sub(r"(\d)l",r"\1 l", x)
+    x = re.sub(r"(\d)cm",r"\1 cm", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)g",r"\1 g", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)mg",r"\1 mg", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)ml",r"\1 ml", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)cl",r"\1 cl", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)l",r"\1 l", x, flags=re.IGNORECASE)
     x = re.sub(r"(\d)(litres?)", r"\1 \2", x)
-    x = re.sub(r"(\d)kg",r"\1 kg", x)
-    x = re.sub(r"(\d)Kg",r"\1 kg", x)
+    x = re.sub(r"(\d)kg",r"\1 kg", x, flags=re.IGNORECASE)
+    x = re.sub(r"(\d)Kg",r"\1 kg", x, flags=re.IGNORECASE)
     x = re.sub(r"(\d)x",r"\1 x", x)
     x = re.sub(r"x\s*(\d)", r"x \1", x)
     x = re.sub(r'^\n+', '', x)
@@ -211,7 +226,11 @@ def correct_descriptif(x):
     x = re.sub(r'Kg', 'kg', x)
     x = re.sub(r'(\d+%)MG(?! sur produit fini)',  # Détecte XX%MG qui n'est pas suivi de "sur produit fini"
                 r'\1 M.G. sur produit fini',x)       # Ajoute " M.G. sur produit fini"
-    return x.capitalize()
+
+      # Capitaliser la première lettre de chaque ligne
+    x = "\n".join(line.capitalize() for line in x.splitlines())
+
+    return x 
 
 def clean_intitule(x):
     if isinstance(x,(float,int)):
