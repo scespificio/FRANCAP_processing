@@ -1,0 +1,10 @@
+python-dotenv
+pandas 
+scikit-learn
+streamlit
+streamlit-authenticator
+openpyxl
+xlsxwriter
+pyspellchecker
+spacy
+unidecode
