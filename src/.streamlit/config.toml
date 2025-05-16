@@ -1,0 +1,22 @@
+# .streamlit/config.toml
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+[ui]
+hideTopBar = true
+
+[theme]
+primaryColor = "#E8441F"
+backgroundColor = "white"
+secondaryBackgroundColor = "#E9DACE"
+textColor = "#3B3450"
+font = "sans serif"
+
+[client]
+showSidebarNavigation = false

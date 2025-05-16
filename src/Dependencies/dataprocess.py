@@ -224,6 +224,8 @@ def correct_descriptif(x):
     x = re.sub(r'\s*%\s*', '% ', x)
     x = re.sub(r'\b([Ll]a poche)\b', 'Le doypack', x)
     x = re.sub(r'Kg', 'kg', x)
+    x = re.sub(r"oe", r"œ", x)
+    
     x = re.sub(r'(\d+%)MG(?! sur produit fini)',  # Détecte XX%MG qui n'est pas suivi de "sur produit fini"
                 r'\1 M.G. sur produit fini',x)       # Ajoute " M.G. sur produit fini"
 
@@ -235,6 +237,8 @@ def correct_descriptif(x):
 def clean_intitule(x):
     if isinstance(x,(float,int)):
         return ''
+        
+    x = re.sub(r"oe", r"œ", x)
     if x.isupper():
         return x.lower().capitalize().strip()
     else:

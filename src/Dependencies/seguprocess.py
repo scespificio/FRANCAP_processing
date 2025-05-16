@@ -228,9 +228,7 @@ def apply_segu_process(self, df, reset=False, market = False):
                    'RI EN €', 'RI EN %', 'PVC NET', 'LOT VIRTUEL', 'PRIX AU KG DU LOT VIRTUEL','SR',
                    'DESCRIPTIF_2','PRIX AU KG_2', 'PRIX AU KG DU LOT VIRTUEL_2',
                    'DESCRIPTIF_3','PRIX AU KG_3', 'PRIX AU KG DU LOT VIRTUEL_3',
-                   'DESCRIPTIF_4','PRIX AU KG_4', 'PRIX AU KG DU LOT VIRTUEL_4',
-                   'DESCRIPTIF_5','PRIX AU KG_5', 'PRIX AU KG DU LOT VIRTUEL_5',
-                   'DESCRIPTIF_6','PRIX AU KG_6', 'PRIX AU KG DU LOT VIRTUEL_6',]
+                   'DESCRIPTIF_4','PRIX AU KG_4', 'PRIX AU KG DU LOT VIRTUEL_4']
             df = get_market_tag(df, self.main_df_m, tag)
             df = df.rename({'MARKET_SR': 'SR_SEGU_MARKET'})
             df['FORMAT MVK'] = df['GENCOD'].apply(lambda x: x in self.main_df_m['GENCOD'].values)
