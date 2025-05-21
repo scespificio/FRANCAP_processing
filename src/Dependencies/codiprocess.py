@@ -49,7 +49,7 @@ def adjust_intitule(x, dict_etoile, dict_rdm, status_bar= None):
         if any([element in intitule for element in list(dict_rdm.keys())]):
             intitule =  dict_rdm.get(intitule)
         else:
-            intitule = "sur les produits "+ x['MARQUE'] + intitule
+            intitule = "sur les " + dp.mettre_au_pluriel_phrase(intitule).lower() + ' ' + x['MARQUE']
     
     if x['MENTION SPECIFIQUE'] in list(dict_etoile.keys()):
         intitule = intitule + dict_etoile.get(x['MENTION SPECIFIQUE'])
@@ -174,6 +174,7 @@ def adjust_rdm(x, status_bar= None):
         if mecapromo.lower().startswith('remise'):
             x['RI EN %'] = pourc
         elif mecapromo.lower().startswith('avantage'):
+            x['BONUS EN %'] = pourc
             x['BONUS'] = pourc
         elif any([mecapromo.startswith(dis) for dis in ['2ème', '3ème']]):
             x['LOT VIRTUEL'] = mecapromo
@@ -187,7 +188,7 @@ def set_lot_virtuel(x):
     if x=='':
         return x
     elif '2 achetés' in x or '2+1' in x:
-        return "2+1(3) OFFERT".upper()
+        return "2+1(5) OFFERT".upper()
     elif '1 acheté' in x:
         pourc = re.findall(r'(\d+)\s*(?=%)', x)[0]
         return f"-{pourc}%(4) SUR LE 2e".upper()
@@ -220,8 +221,8 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
     
     if not reset:
         df.drop(['RADIO', 'FACEBOOK', 'INSTAGRAM', 'SITE WEB COCCI', 'LINKEDIN', 'AUTRES SUPPORTS', 'ENCART FOURNISSEUR'], axis=1, inplace=True)
-        rename_dict = {'STOP RAYON': 'SR', 'FORMAT SUPER':'FORMAT GV','FORMAT EXPRESS':'FORMAT MV','FORMAT COCCIMARKET':'FORMAT MVK',
-                   'bonus %': 'BONUS EN %','FORMAT REGIONAL pv':'FORMAT PV','PRIX AU KG/L':'PRIX AU KG', 'PRIX AU KG OU L AVEC ET SANS RI':'PRIX AU KG'}
+        rename_dict = {'STOP RAYON': 'SR', 'FORMAT SUPER':'FORMAT GV','FORMAT EXPRESS':'FORMAT MV','FORMAT COCCIMARKET':'FORMAT MVK','bonus':'BONUS',
+                   'bonus %': 'BONUS EN %','BONUS €':'BONUS','BONUS %': 'BONUS EN %','FORMAT REGIONAL pv':'FORMAT PV','PRIX AU KG/L':'PRIX AU KG', 'PRIX AU KG OU L AVEC ET SANS RI':'PRIX AU KG'}
         df = df.rename(rename_dict, axis=1)
         columns = df.columns
         missing_cols = [col for col in output_col if col not in columns]
@@ -251,9 +252,9 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         df['PVC NET'] = df['PVC NET'].apply(lambda x: None if x is None or x in ['',' '] else float(x)) ### PVC MAXI
 
         df = dp.verifGencod(status, df, len_df) #Verification et formattage des GENCOD
-        self.df_nat = dp.verifGencod(status, self.df_nat, len(self.df_nat))
-        liste_nat = self.df_nat.GENCOD.tolist()
-        df = df.apply(lambda x: set_selection(x,liste_nat), axis=1)
+        #self.df_nat = dp.verifGencod(status, self.df_nat, len(self.df_nat))
+        #liste_nat = self.df_nat.GENCOD.tolist()
+        #df = df.apply(lambda x: set_selection(x,liste_nat), axis=1)
 
 
         status_bar = tool.ProgressBar(status, len_df, '......répartitions des PHOTOS')
@@ -270,6 +271,9 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         df['RONDE DES MARQUES'] = df['RONDE DES MARQUES'].fillna('')
         if not reset:
             df = df.apply(lambda x: adjust_rdm(x,status_bar), axis=1)
+            df['BONUS EN %'] = df['BONUS EN %'].apply(lambda x: f"{int(round(x * 100))}%" if pd.notnull(x) and x != "" else "")
+            df['BONUS'] = df['BONUS'].apply(lambda x: f"{round(x, 2):.2f}".replace('.', ',') if pd.notnull(x) and x != "" else "")
+   
         status_bar.display(float(1))
 
         ####AFFICHE
@@ -337,26 +341,18 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         ####################### Nettoyage PRIX AU KG DU LOT VIRTUEL
 
         df['PRIX AU KG'] = df['PRIX AU KG'].fillna('').apply(lambda x: correctpxkl(x)).apply(lambda x: dp.capitalize_lines(x))
-
+        df['PRIX AU KG'] = df.apply(lambda x:  x['PRIX AU KG'].splitlines()[0] if x['LOT VIRTUEL'] != "" else x['PRIX AU KG'], axis=1)
 
         status_bar = tool.ProgressBar(status, len_df, '......corrections PRIX AU KG DU LOT VIRTUEL')
         df['PRIX AU KG DU LOT VIRTUEL'] = df.apply(lambda x: correct_pxkg_lotvirtuel(x, status_bar), axis=1)
         status_bar.display(float(1))
 
 
-
-
-
-        
-
     #pour codifrance verifier les prix au kl et le prix net
 
         ####### transformer les colonnes booléènnes (celle qui utilise X pour Vrai)
 
-        df['ORIGINE'] = df.apply(lambda x : dp.correct_origine(x), axis=1)              ###### dans liste client
-        #df['PRODUIT DE UNE'] = None               ###### dans liste client
-        #df['PRODUIT EN DER'] = None               ###### dans liste client
-        #df['MISE EN AVANT'] = None               ###### dans liste client
+        df['ORIGINE'] = df.apply(lambda x : dp.correct_origine(x), axis=1)              
 
 
 #################################A TRAITER LORS DU DCF
@@ -379,46 +375,3 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         status.update(expanded=False)
 
     return df[output_col]
-
-def fusion_codifrance(df_codi, df_fran): #Fonction pour fusionner le traitement des listes codifrance et francap
-  
-        col2remove_fran = [ 'CLE', 'CODE OP', 'DATE OP', 
-       'SUPER_Page', 'SUPER_Rang', 'SUPER_Case', 'EXPRESS_Page',
-       'EXPRESS_Rang', 'EXPRESS_Case', 'MARKET_Page', 'MARKET_Rang',
-       'MARKET_Case', 'REGIO_Page', 'REGIO_Rang', 'REGIO_Case', 'SUPER_WP',
-       'EXPRESS_WP', 'MARKET_WP','PRIX AU KG', 'PVC MAXI', 'BONUS',
-       'RI EN €', 'RI EN %', 'PVC NET','PRIX AU KG DU LOT VIRTUEL', 'MARKET_DESCRIPTIF', 'MARKET_PRIX AU KG',
-       'MARKET_PVC_MAXI', 'MARKET_BONUS', 'MARKET_RI EN €', 'MARKET_RI EN %',
-       'MARKET_PVC NET', 'MARKET_LOT VIRTUEL', 'VIDE_2',
-       'MARKET_PRIX AU KG DU LOT VIRTUEL', 'PRIX AU KG_2', 'PRIX AU KG DU LOT VIRTUEL_2',
-        'PRIX AU KG_3', 'PRIX AU KG DU LOT VIRTUEL_3',
-        'PRIX AU KG_4', 'PRIX AU KG DU LOT VIRTUEL_4',
-        'PRIX AU KG_5', 'PRIX AU KG DU LOT VIRTUEL_5',
-        'PRIX AU KG_6', 'PRIX AU KG DU LOT VIRTUEL_6',]
-        
-        col2copy = ['ISFROM_LOGO','MENTION SPECIFIQUE',
-       'CATEGORIE', 'INTITULE', 'MARQUE', 'ORIGINE', 'MECAPROMO',
-       'RONDE DES MARQUES', 'DESCRIPTIF', 'LOT VIRTUEL',
-       'FORMAT GV', 'FORMAT MV',
-       'FORMAT MVK', 'FORMAT PV', 'PRODUIT DE UNE', 'PRODUIT EN DER',
-       'MISE EN AVANT',  'PICTO', 'SR', 'SR_SEGU_MARKET', 'CATALOG',
-       'CATALOG_MARKET', 'AFFICHE', 'SELECTION FRANCAP',
-       'SELECTION CODIFRANCE', 'INFO COMPLEMENTAIRES', 'PHOTO1', 'PHOTO2',
-       'PHOTO3', 'PHOTO4', 'PHOTO5', 'PHOTO6', 'PHOTO7', 'PHOTO8',
-       'DESCRIPTIF_2','DESCRIPTIF_3','DESCRIPTIF_4','DESCRIPTIF_5','DESCRIPTIF_6',]
-        
-        rename_dict = { col+'_x': col for col in df_codi.columns}
-        col2remove_fran = [col +'_y' for col in col2remove_fran]
-
-        df = pd.merge(df_codi, df_fran, on='GENCOD', how='left')
-        df.drop(col2remove_fran, axis=1, inplace=True)
-
-        df['SELECTION FRANCAP_y']= df['SELECTION FRANCAP_y'].fillna(False)
-        for col in col2copy:
-                df[col+'_x'] = df.apply(lambda x: x[col+'_y'] if (x['SELECTION FRANCAP_y'] and x['SELECTION FRANCAP_y'] is not None) else x[col+'_x'], axis=1 )
-        col2copy = [col +'_y' for col in col2copy]
-        df.drop(col2copy, axis=1, inplace=True)
-
-        df.rename(columns=rename_dict, inplace=True)
-        return df
-

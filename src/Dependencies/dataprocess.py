@@ -519,3 +519,32 @@ def verifGencod(status, df, len_df):
     if status is not None:
         status_bar.display(float(1))
     return df
+
+def mettre_au_pluriel_phrase(phrase):
+    if not isinstance(phrase, str) or phrase.strip() == "":
+        return phrase
+
+    mots = phrase.strip().split()
+    if not mots:
+        return phrase
+
+    # Accord du nom (1er mot) avec règles simples
+    nom = mots[0]
+    if nom.endswith(('s', 'x', 'z')):
+        nom_pluriel = nom
+    elif nom.endswith('al') and nom not in ['bal', 'carnaval', 'récital', 'festival']:
+        nom_pluriel = nom[:-2] + 'aux'
+    elif nom.endswith(('eau', 'eu')):
+        nom_pluriel = nom + 'x'
+    else:
+        nom_pluriel = nom + 's'
+
+    # Accord de l'adjectif (2e mot si présent)
+    adjectif_pluriel = []
+    for mot in mots[1:]:
+        if mot.endswith(('s', 'x')):
+            adjectif_pluriel.append(mot)
+        else:
+            adjectif_pluriel.append(mot + 's')
+
+    return " ".join([nom_pluriel] + adjectif_pluriel)

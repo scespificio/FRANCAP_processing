@@ -44,7 +44,7 @@ def set_nat(df_nat, col, x, status_bar):
     
 def set_lot_virtuel(x, market):
     if x['NB UC DS LOT VIRTUEL'] == 3:
-        return " 2+1(3) OFFERT"
+        return " 2+1(5) OFFERT"
     elif x['NB UC DS LOT VIRTUEL'] == 2:
         if market:
             reste = int(x['LOT VIRTUEL VALEUR']*100)%100
@@ -181,6 +181,7 @@ def apply_segu_process(self, df, reset=False, market = False):
         df = df.apply(lambda x: x if x['SELECTION FRANCAP'] else adjust_intitule(x, men_etoile, {}, status_bar), axis=1)
         status_bar.display(float(1))
         status_bar = tool.ProgressBar(status, len_df, '......assignation des pictos des produits francap')
+        df['PICTO'] = df.apply(lambda x: dp.set_picto(x, None), axis=1)
         df['PICTO'] = df['PICTO'].apply(lambda x: '' if tool.isnull(x) else x).fillna('').astype(str)
         df['ORIGINE'] = df.apply(lambda x: '' if x['PICTO']=='SURGELÉS' else x['ORIGINE'], axis=1)
         df['ORIGINE'] = df['ORIGINE'].apply(lambda x: '' if tool.isnull(x) else x).fillna('').astype(str)
