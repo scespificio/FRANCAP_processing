@@ -9,7 +9,7 @@ ADD requirement.txt /app/requirement.txt
 ADD /src/ /app/
 RUN /bin/sh -c ". ../app-env/bin/activate && pip install -r /app/requirement.txt && python3 -m spacy download fr_core_news_md"
 WORKDIR /app 
-CMD /bin/sh -c ". ../app-env/bin/activate && streamlit run app.py --server.port 5891 > ./save/$(date +'%Y-%m-%d')_trace.log"
+CMD /bin/sh -c ". ../app-env/bin/activate && streamlit run app.py --server.port 5890 > ./save/$(date +'%Y-%m-%d')_trace.log"
 VOLUME ["/app/auth", "/app/config", "/app/save", "/app/static/PR2418", "/app/static/PR2419", "/app/static/PR2420", "/app/static/PR2421","/app/static/PR2422", "/app/static/PR2423"]
-EXPOSE 5891
+EXPOSE 5890
 
