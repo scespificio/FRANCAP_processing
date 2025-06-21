@@ -80,7 +80,6 @@ if st.session_state['authentication_status']:   ## execute only on authentificat
                 :four: La feuille EP définit les Encart Produits Segurel. Elle doit être listée dans un tableau unique avec une colonne 'pageligne', comme dans l'image ci-dessous:
             ''')
             st.image('ressources/EP.png', use_container_width='auto')
-            #st.image('ressources/EP.png', use_column_width='auto')
     
     
         #francap_file = st.file_uploader(label = ":one: Importer la liste Francap",type=['xls','xlsx','xlsm'], 

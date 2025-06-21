@@ -44,7 +44,6 @@ if st.session_state['authentication_status']:
 
 
     col1, col2 = st.columns([12,4])
-    #col2.image('ressources/Francap.png', use_column_width='auto')
     col2.image('ressources/Francap.png', use_container_width='auto')
     col1.header(f"Données : {code_op}", divider = True, anchor = False)
     col1.subheader(f"{date_op}", divider = True, anchor = False)
