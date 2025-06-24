@@ -19,7 +19,7 @@ def authenticated_menu():
 
     st.sidebar.subheader('Fonctions', divider=True)
     st.sidebar.page_link("pages/valid_origine.py", label="corriger les origines", icon=":material/pin:")
-    #st.sidebar.page_link("pages/valid_origine.py", label="Stop Rayon et Degrouper Codifrance", icon=":material/arrow_split:")
+    st.sidebar.page_link("pages/sr_codi.py", label="Stop Rayon et Degrouper Codifrance", icon=":material/arrow_split:")
     #st.sidebar.page_link("pages/valid_origine.py", label="Stop Rayon et Groupement Segurel", icon=":material/mediation:")
 
     st.sidebar.subheader('Paramètres', divider=True)

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from spellchecker import SpellChecker
 pd.options.mode.copy_on_write = True
 
-load_dotenv()
+load_dotenv(dotenv_path='../.env')
 CONFIG_PATH = os.getenv('CONFIG_PATH')
 #CONFIG_FILE = 'ConfigFRA.xlsx'
 DEPARTEMENTS = pd.read_csv(CONFIG_PATH + '/' + 'departements_francais.csv').nom.to_list()
@@ -128,36 +128,7 @@ def correctpxkl(x):
 def productnumbers(x):
     return len(tool.split_descriptions(x.DESCRIPTIF))
 
-def dissociategroup(x, status_bar= None):
-    if status_bar is not None:
-        status_bar.increment()
-        status_bar.display()
 
-    if not x.SR and x.CATALOG:
-        #split descriptif
-        descr = tool.split_descriptions(x.DESCRIPTIF)
-        for i, des in enumerate(descr):
-            if i == 0:
-                x[f'DESCRIPTIF'] = des
-            elif i == 5:
-                x[f'DESCRIPTIF_6'] = ' ou '.join(descr[5:])
-            else:
-                x[f'DESCRIPTIF_{i+1}'] = des
-        pxkl = tool.split_pxkl(x['PRIX AU KG'])    
-        for i, px in enumerate(pxkl):
-            if i == 0:
-                x['PRIX AU KG'] = px
-            else:
-                x[f'PRIX AU KG_{i+1}'] = px
-
-
-        pxkllv = tool.split_pxkllv(x['PRIX AU KG DU LOT VIRTUEL'])    
-        for i, px in enumerate(pxkllv):
-            if i == 0:
-                x['PRIX AU KG DU LOT VIRTUEL'] = px
-            else:
-                x[f'PRIX AU KG DU LOT VIRTUEL_{i+1}'] = px
-    return x
 
 
 def adjust_rdm(x, status_bar= None):
@@ -252,11 +223,7 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         df['PVC NET'] = df['PVC NET'].apply(lambda x: None if x is None or x in ['',' '] else float(x)) ### PVC MAXI
 
         df = dp.verifGencod(status, df, len_df) #Verification et formattage des GENCOD
-        #self.df_nat = dp.verifGencod(status, self.df_nat, len(self.df_nat))
-        #liste_nat = self.df_nat.GENCOD.tolist()
-        #df = df.apply(lambda x: set_selection(x,liste_nat), axis=1)
-
-
+  
         status_bar = tool.ProgressBar(status, len_df, '......répartitions des PHOTOS')
         df = df.apply(lambda x: dp.dissociatephoto(x,status_bar), axis=1)
         for i in range(8):
@@ -266,6 +233,10 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         status_bar.display(float(1))
         
         df.DESCRIPTIF = df.DESCRIPTIF.apply(lambda x: dp.correct_descriptif(str(x)))
+
+        if not reset:
+            #status_bar = tool.ProgressBar(status, len_df, '......fragmentation des groupement')
+            df['SR'] = df.apply(lambda x : False if (re.search(r"[oO]u en|Existe aussi en|\b[Oo]u\b", str(x['DESCRIPTIF'])) or x['PVC MAXI'] is None) else True, axis = 1)
   
         status_bar = tool.ProgressBar(status, len_df, '......ajustement RDM')
         df['RONDE DES MARQUES'] = df['RONDE DES MARQUES'].fillna('')
@@ -282,19 +253,9 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
             df['PRODUIT EN DER'] = df['PRODUIT EN DER'].apply(lambda x: '' if tool.isnull(x) else x).fillna('').astype(str)
             df['MISE EN AVANT'] = df['MISE EN AVANT'].apply(lambda x: '' if tool.isnull(x) else x).fillna('').astype(str)
 
-        if not reset:
-            #status_bar = tool.ProgressBar(status, len_df, '......fragmentation des groupement')
-            df['SR'] = df.apply(lambda x : False if (re.search(r"[oO]u en|Existe aussi en|\b[Oo]u\b", str(x['DESCRIPTIF'])) or x['PVC MAXI'] is None) else True, axis = 1)
 
-            ######DISSOCIATION
-            #for row in df.iterrows():
-            #    nb_prod = productnumbers(row)
-            #    if isrow2dissociate(row):
-            #        pass
-            #    else:
-            #        pass
-            #    pass
-            #df = df.apply(lambda x: dissociategroup(x,status_bar), axis=1)
+
+ 
 
     #CATEGORIES ET MENTIONS SPECIFIQUES#################################################################################################
         status_bar = tool.ProgressBar(status, len_df, '......corrections des categories')
@@ -375,3 +336,264 @@ def apply_codi_process(self, df, isfrom = None , reset=False):
         status.update(expanded=False)
 
     return df[output_col]
+
+
+
+def apply_sr_process(df):
+    #selectionner les conditions de degroupage, SR, et Catalogue:
+    isgroup = ~df['RONDE DES MARQUES'] & (df['PHOT02']!='')               
+    return df[isgroup]
+
+
+           ######DISSOCIATION
+            #for row in df.iterrows():
+            #    nb_prod = productnumbers(row)
+            #    if isrow2dissociate(row):
+            #        pass
+            #    else:
+            #        pass
+            #    pass
+            #df = df.apply(lambda x: dissociategroup(x,status_bar), axis=1)
+
+
+
+
+
+
+# Découpe la chaîne en utilisant la regex regex_saveur et aussi les virgules
+def split_by_saveur_and_comma(text):
+    """
+    Découpe une chaîne de saveurs/packagings selon les connecteurs ('ou', 'existe aussi en', etc.) et les virgules,
+    puis nettoie chaque élément pour ne garder que les saveurs pertinentes.
+    """
+    # Découpe d'abord selon les connecteurs de saveurs
+    parts = re.split(regex_saveur, text)
+    result = []
+    for part in parts:
+        cleaned = re.sub(regex_saveur, '', part, flags=re.IGNORECASE).strip()
+        if not cleaned:
+            continue
+        # Découpe par virgule, nettoie chaque sous-partie
+        for p in cleaned.split(','):
+            p_clean = p.strip()
+            # Ignore les lignes commençant par Le/La/L' et contenant une taille/unité
+            if re.match(regex_le_la, p_clean) and (re.search(regex_contenu, p_clean) or re.search(regex_unitaire, p_clean)):
+                continue
+            # Si ce n'est pas un packaging, retire la taille/unité éventuelle
+            if not re.match(regex_le_la, p_clean):
+                p_clean = re.sub(regex_contenu, '', p_clean).strip()
+                # Coupe à la première occurrence d'un nombre unitaire
+                p_clean = re.split(regex_unitaire, p_clean, maxsplit=1)[0].strip()
+            if p_clean:
+                result.append(p_clean)
+    return result
+
+
+
+def parse_descriptif_lines_into_dict(row):
+    """
+    Parse chaque ligne du champ 'DESCRIPTIF' pour extraire les saveurs, packaging, taille et unité.
+    Retourne une liste de dictionnaires structurés.
+    """
+
+    results = []
+    lines = str(row['DESCRIPTIF']).split('\n')
+
+    for line in lines:
+        # Recherche de la taille/unité via regex
+        match_c = re.search(regex_contenu, line)
+        match_u = re.search(regex_unitaire, line)
+        saveurs = split_by_saveur_and_comma(line)
+
+        if match_c or match_u:
+            match = match_c if match_c else match_u
+            packaging = line[:match.start()].strip()
+            size = ''.join(filter(str.isdigit, match.group(0)))
+            # Récupère l'unité (lettres) si regex_contenu, sinon tente après le match unitaire
+            unit = (
+                ''.join(filter(str.isalpha, match.group(0)))
+                if match_c else
+                (line[match_u.end():].strip().split()[0] if match_u and line[match_u.end():].strip() else None)
+            )
+            # Retirer packaging, size et unit de la ligne pour misc (version condensée)
+            misc = line
+            for val in (packaging, size, unit):
+                if val:
+                    misc = misc.replace(val, '', 1)
+            misc = misc.strip()
+            results.append({
+                'saveurs': saveurs,
+                'packaging': packaging if packaging else None,
+                'size': size if size else None,
+                'unit': unit if unit else None,
+                'misc': misc if misc else None
+            })
+        else:
+            if saveurs[0]== line.strip if line.strip() else None:
+                # Cas où il n'y a que des saveurs sans taille/unité
+                results.append({
+                    'saveurs': None,
+                    'packaging': None,
+                    'size': None,
+                    'unit': None,
+                    'misc': line.strip() if line.strip() else None
+                    })
+            # Cas sans taille/unité détectée
+            else:
+                results.append({
+                    'saveurs': saveurs,
+                    'packaging': None,
+                    'size': None,
+                    'unit': None,
+                    'misc': None
+                })
+
+    return results
+
+def merge_descriptif_dict(d_dict):
+    """
+    Fusionne une liste de dictionnaires descriptifs en regroupant les saveurs par contenant (size).
+    - d_dict: liste de dictionnaires avec les clés 'saveurs', 'packaging', 'size', 'unit'
+    Retourne une liste de dictionnaires fusionnés.
+    """
+    assert d_dict, "DESCRIPTION should not be empty"
+
+    # Vérifier que tous les dictionnaires ont les mêmes unités
+    # Met à jour d_dict en place si des unités différentes sont trouvées
+    units = [item['unit'] for item in d_dict if item['unit'] is not None]
+    if units and any(u != units[-1] for u in units):
+        last_unit = units[-1]
+        for item in d_dict:
+            if item['unit'] is not None and item['unit'] != last_unit:
+                # Concaténer packaging, size et unit pour misc
+                misc_parts = []
+                if item.get('packaging'):
+                    misc_parts.append(str(item['packaging']))
+                if item.get('size'):
+                    misc_parts.append(str(item['size']))
+                if item.get('unit'):
+                    misc_parts.append(str(item['unit']))
+                item['misc'] = " ".join(misc_parts)
+                item['packaging'] = None
+                item['size'] = None
+                item['unit'] = None
+
+    # Définir 'packaging' comme la première valeur non nulle trouvée dans d_dict
+    first_packaging = next((item['packaging'] for item in d_dict if item.get('packaging')), None)
+    for item in d_dict:
+        if not item.get('packaging') and first_packaging:
+            item['packaging'] = first_packaging
+    # Extraire tous les 'size' non None, en gardant l'ordre et l'unicité
+    seen = set()
+    contenants = [item['size'] for item in d_dict if item['size'] is not None and not (item['size'] in seen or seen.add(item['size']))]
+
+    result = []
+    idx = 0
+    while idx < len(d_dict):
+        # Pour chaque contenant, regrouper les éléments jusqu'au dernier de ce contenant
+        for c in contenants:
+            indices_c = [i for i in range(idx, len(d_dict)) if d_dict[i]['size'] == c]
+            if not indices_c:
+                continue
+            last_idx = indices_c[-1]
+            # Inclure aussi les éléments sans 'size' avant le dernier de ce contenant
+            sub_d_dict = [d_dict[i] for i in range(idx, last_idx + 1) if d_dict[i]['size'] is None or d_dict[i]['size'] == c]
+            # Fusionner les saveurs en gardant l'ordre et l'unicité
+            saveurs = list(dict.fromkeys(s for item in sub_d_dict for s in item['saveurs']))
+            packaging = next((d['packaging'] for d in sub_d_dict if d['packaging']), None)
+            unit = next((d['unit'] for d in sub_d_dict if d['size'] == c and d['unit']), None)
+            misc = next((d['misc'] for d in sub_d_dict if d['misc']), None)
+            result.append({
+                'saveurs': saveurs,
+                'packaging': packaging,
+                'size': c,
+                'unit': unit,
+                'misc': misc
+            })
+            idx = last_idx + 1
+        break  # On sort après avoir traité tous les contenants
+
+    return result
+
+def apply_sr_process(df):
+    df['desc_dict'] = df.apply(lambda row: merge_descriptif_dict(parse_descriptif_lines_into_dict(row)), axis=1)
+    df['len'] = df['desc_dict'].apply(lambda desc: sum(len(d.get('saveurs', [])) for d in desc))
+    df['CLE'] = df['CLE'].astype(int) * 100
+    df['PRIX AU KG'] = df['PRIX AU KG'].astype('object')
+
+    units_t = {'g': 1000, 'kg': 1, 'mg': 1_000_000, 'ml': 1000, 'cl': 100, 'l': 1, 'default': 1}
+
+    isgroup = (~df['RONDE DES MARQUES']) & (
+        (df['PHOTO2'] != '') | (df['DESCRIPTIF_2'] != '') | (df['len'] > 1)
+    )
+
+    new_rows = []
+    regex_euro = r"\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?(?=\s?€)"
+    
+    for idx in df[isgroup].index:
+        row = df.loc[idx]
+        cle = row['CLE']
+        desc_dict = row['desc_dict']
+        px_net, px_max = row['PVC NET'], row['PVC MAXI']
+
+        df.at[idx, 'SR'] = ''
+        df.at[idx, 'CATALOG'] = 'X'
+
+        for i, d in enumerate(desc_dict):
+            colname = f"DESCRIPTIF{'' if i == 0 else f'_{i + 1}'}"
+            colpkg = f"PRIX AU KG{'' if i == 0 else f'_{i + 1}'}"
+            colpkglv = f"PRIX AU KG DU LOT VIRTUEL{'' if i == 0 else f'_{i + 1}'}"
+
+            # Texte descriptif combiné
+            value_desc = '\n'.join(filter(None, [
+                d.get('misc', ''),
+                ', '.join(d.get('saveurs', [])),
+                ' '.join(filter(None, [d.get('packaging'), d.get('size'), d.get('unit')]))
+            ]))
+            df.at[idx, colname] = value_desc
+
+            # Conditionnement
+            match_cond = re.search(r"\b(\d+)\b", str(d.get('packaging', '')))
+            conditionnement = int(match_cond.group(1)) if match_cond else 1
+            size = float(d.get('size', '1').replace(',', '.'))
+            unit_factor = units_t.get(d.get('unit'), 1)
+
+            if i > 0:
+                prix_kg_str = row['PRIX AU KG']
+                matches = re.findall(regex_euro, prix_kg_str)
+                p1 = px_net * unit_factor / (conditionnement * size)
+                p2 = px_max * unit_factor / (conditionnement * size)
+
+                if matches:
+                    prix_kg_str = re.sub(matches[0], f"{p1:.2f}".replace(".", ","), prix_kg_str)
+                if len(matches) > 1:
+                    prix_kg_str = re.sub(matches[1], f"{p2:.2f}".replace(".", ","), prix_kg_str)
+                df.at[idx, colpkg] = prix_kg_str
+            else:
+                df.at[idx, colpkg] = row['PRIX AU KG']
+
+            prix_lv_str = row['PRIX AU KG DU LOT VIRTUEL']
+            if i > 0:
+                matches_lv = re.findall(regex_euro, prix_lv_str)
+                if len(matches_lv) > 2:
+                    prix_lv_str = re.sub(matches_lv[2], f"{p1:.2f}".replace(".", ","), prix_lv_str)
+            df.at[idx, colpkglv] = prix_lv_str
+
+            # Création des lignes SR
+            for j, sav in enumerate(d.get('saveurs', []), start=1):
+                new_row = row.copy()
+                new_row['CLE'] = cle + j
+                new_row['DESCRIPTIF'] = '\n'.join(filter(None, [
+                    d.get('misc', ''), sav,
+                    ' '.join(filter(None, [d.get('packaging'), d.get('size'), d.get('unit')]))
+                ]))
+                new_row['SR'] = 'X'
+                new_row['CATALOG'] = ''
+                new_row['PRIX AU KG'] = df.at[idx, colpkg]
+                new_rows.append(new_row)
+
+    # Ajouter toutes les lignes SR en une fois
+    if new_rows:
+        df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
+
+    return df.sort_values("CLE", ascending=True).reset_index(drop=True)

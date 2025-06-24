@@ -12,7 +12,17 @@ SPELL.word_frequency.add("animalerie")
 
 word2add = ["€", "BSA", "BOF", "animalerie", "UE", "Asie", "Amérique", "Amériques", "2ème", "Monbéliard"]
 
-load_dotenv('../.env')
+load_dotenv(dotenv_path='../.env')
+
+
+# main.py
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Charge le fichier .env (placé dans le même dossier ou chemin spécifié)
+
+print("CUSTOMER =", os.getenv("CUSTOMER"))
+print("CONFIG_FILE =", os.getenv("CONFIG_FILE"))
 
 CONFIG_PATH = os.getenv('CONFIG_PATH')
 DEPARTEMENTS = pd.read_csv(CONFIG_PATH + '/' + 'departements_francais.csv').nom.to_list()
